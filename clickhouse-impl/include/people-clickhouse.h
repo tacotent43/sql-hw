@@ -20,7 +20,7 @@ struct PeopleClickhouse {
     std::unique_ptr<clickhouse::Client> client;
 
     void initialize();
-    void insert(int id, std::string region, std::string employee, int amount);
+    void insert(const std::vector<Person*> &people);
     void drop();
 
     void solve();

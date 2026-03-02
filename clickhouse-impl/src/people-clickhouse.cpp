@@ -4,32 +4,40 @@
 
 void PeopleClickhouse::initialize() {
     try {
-        this->client->Execute(R"(
-            CREATE TABLE IF NOT EXISTS sales (
-                id UInt64,
-                region String,
-                employee String,
-                amount UInt64) 
-            ENGINE = MergeTree 
-            ORDER BY id)"
+        this->client->Execute(
+            "CREATE TABLE IF NOT EXISTS sales ("
+            "    id UInt64,"
+            "    region String,"
+            "    employee String,"
+            "    amount UInt64) "
+            "ENGINE = MergeTree "
+            "ORDER BY id"
         );
     } catch (const std::exception &e) {
         std::cerr << "Initialization error: " << e.what() << '\n';
     }
 }
 
-// must eat std::vector<Person> or smth like that and do batch inserts; ts is slow af
-void PeopleClickhouse::insert(int id, std::string region, std::string employee, int amount) {
+void PeopleClickhouse::insert(const std::vector<Person*> &people) {
     try {
         auto idColumn = std::make_shared<clickhouse::ColumnUInt64>();
         auto regionColumn = std::make_shared<clickhouse::ColumnString>();
         auto employeeColumn = std::make_shared<clickhouse::ColumnString>();
         auto amountColumn = std::make_shared<clickhouse::ColumnUInt64>();
 
-        idColumn->Append(id);
-        regionColumn->Append(region);
-        employeeColumn->Append(employee);
-        amountColumn->Append(amount);
+        static const size_t psize = people.size();
+        idColumn->Reserve(psize);
+        regionColumn->Reserve(psize);
+        employeeColumn->Reserve(psize);
+        amountColumn->Reserve(psize);
+
+        for (size_t i = 0; i < psize; ++i) {
+            const Person* person = people[i];
+            idColumn->Append(person->id);
+            regionColumn->Append(person->region);
+            employeeColumn->Append(person->employee);
+            amountColumn->Append(person->amount);
+        }
 
         clickhouse::Block block{};
         block.AppendColumn("id", idColumn);

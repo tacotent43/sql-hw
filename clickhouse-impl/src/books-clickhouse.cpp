@@ -69,10 +69,7 @@ void BooksClickhouse::solve() {
     futures.emplace_back(std::async(std::launch::async, &BooksClickhouse::insertBook, this, 2, "Book B", "Author 2", 1999));
     futures.emplace_back(std::async(std::launch::async, &BooksClickhouse::insertBook, this, 3, "Book C", "Author 3", 2015));
 
-    // mutex is unnecessary
-    std::mutex m;
     for (auto &f : futures) {
-        std::lock_guard<std::mutex> lock(m); // ?
         f.get();
     }
     getBooks();
